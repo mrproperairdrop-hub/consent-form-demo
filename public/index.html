@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang='ru'>
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name ='viewport' content = 'width=device-width, initial scale=1'/>
+        <title> Consent form demo</title>
+            <style>
+                body {
+                    font-family: system-ui, Arial; 
+                    max-width: 720px; 
+                    margin: 40px auto; 
+                    padding: 0 16px;
+                }
+                .card { 
+                    border: 1px solid #ddd; 
+                    border-radius: 12px; 
+                    padding: 16px; 
+                }
+                label { 
+                    display:block; 
+                    margin-top: 12px; 
+                }
+                input[type="text"], input[type="email"] { 
+                    width: 100%; 
+                    padding: 10px; 
+                    margin-top: 6px; 
+                }
+                button { 
+                    margin-top: 14px; 
+                    padding: 10px 14px; 
+                    cursor: pointer; 
+                }
+                .row { 
+                    display:flex; 
+                    gap:10px; 
+                    align-items:flex-start; 
+                    margin-top: 12px; 
+                }
+                .row input[type="checkbox"] { 
+                    width:auto; 
+                    margin-top: 2px; 
+                }
+                #status { 
+                    margin-top: 10px; 
+                    font-size: 14px; 
+                    color: #444; 
+                }
+            </style>
+    </head>
+    <body>
+        <h1>Учебная форма</h1>
+
+        <div class="card">
+            <p>
+            Это учебный проект. Данные отправляются на ваш сервер и используются только для демонстрации обработки формы.
+            </p>
+
+            <form id="demoForm">
+            <label>
+                Имя
+                <input name="name" type="text" required minlength="2" maxlength="50" placeholder="Lev" />
+            </label>
+
+            <label>
+                Email
+                <input name="email" type="email" required placeholder="test@example.com" />
+            </label>
+
+            <div class="row">
+                <input id="consent" name="consent" type="checkbox" required />
+                <label for="consent">
+                Я согласен(на) на обработку введённых данных в учебных целях (демо).
+                </label>
+            </div>
+
+            <button type="submit">Отправить</button>
+            <div id="status"></div>
+            </form>
+        </div>
+
+        <script>
+            const form = document.getElementById('demoForm');
+            const statusEl = document.getElementById('status');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                statusEl.textContent = 'Отправляю...';
+
+                const fd = new FormData(form);
+                const data = Object.fromEntries(fd.entries());
+
+                // checkbox: если отмечен, в FormData будет "on"
+                data.consent = data.consent === 'on';
+
+                try {
+                    const res = await fetch('/api/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    });
+
+                    const json = await res.json();
+                    if (!res.ok) throw new Error(json.error || 'Request failed');
+
+                    statusEl.textContent = 'Готово ✅ (сервер принял данные)';
+                    form.reset();
+                } catch (err) {
+                    statusEl.textContent = 'Ошибка ❌: ' + err.message;
+                }
+            });
+        </script>
+    </body>
+
+</html>
