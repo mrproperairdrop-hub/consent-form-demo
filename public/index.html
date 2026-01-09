@@ -3,8 +3,11 @@
     <head>
         <meta charset="UTF-8"/>
         <meta name ='viewport' content = 'width=device-width, initial scale=1'/>
-        <title> Consent form demo</title>
+        <title> Consent form </title>
             <style>
+                * {
+                    box-sizing: border-box;
+                }
                 body {
                     font-family: system-ui, Arial; 
                     max-width: 720px; 
@@ -21,10 +24,18 @@
                     margin-top: 12px; 
                 }
                 input[type="text"], input[type="email"] { 
-                    width: 100%; 
-                    padding: 10px; 
-                    margin-top: 6px; 
+                    width: 100%;
+                    padding: 14px 16px;     
+                    margin-top: 8px;
+                    font-size: 16px;        
+                    border-radius: 10px;
+                    border: 1px solid #ccc;
                 }
+                input[type="checkbox"]{
+                    transform: scale(1.6);
+                    transform-origin: left center;
+                    margin-right: 10px;
+                    }
                 button { 
                     margin-top: 14px; 
                     padding: 10px 14px; 
@@ -45,20 +56,36 @@
                     font-size: 14px; 
                     color: #444; 
                 }
+                .submit-btn{
+                    display: block;
+                    width: 100%;
+                    padding: 16px 18px;
+                    font-size: 18px;
+                    border-radius: 12px;
+                    border: none;
+                    background: #0a84ff;
+                    color: white;
+                    font-weight: 700;
+                    cursor: pointer;
+                    margin-top: 18px;
+                }
+                .submit-btn:active{
+                    transform: scale(0.98);
+                }
             </style>
     </head>
     <body>
-        <h1>Учебная форма</h1>
+        <h1>Введите свои данные</h1>
 
         <div class="card">
             <p>
-            Это учебный проект. Данные отправляются на ваш сервер и используются только для демонстрации обработки формы.
+                Вы зашли на сайт nenayobivaem.naebem!
             </p>
 
             <form id="demoForm">
             <label>
                 Имя
-                <input name="name" type="text" required minlength="2" maxlength="50" placeholder="Lev" />
+                <input name="name" type="text" required minlength="2" maxlength="50" placeholder="Alex" />
             </label>
 
             <label>
@@ -69,45 +96,71 @@
             <div class="row">
                 <input id="consent" name="consent" type="checkbox" required />
                 <label for="consent">
-                Я согласен(на) на обработку введённых данных в учебных целях (демо).
+                Подтверждаю, что ознакомлен с пользовательским соглашением
                 </label>
             </div>
 
-            <button type="submit">Отправить</button>
+            <button type="submit" class="submit-btn">Отправить</button>
             <div id="status"></div>
             </form>
         </div>
 
-        <script>
-            const form = document.getElementById('demoForm');
-            const statusEl = document.getElementById('status');
+            <script>
+                const form = document.getElementById('demoForm');
+                const statusEl = document.getElementById('status');
 
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                statusEl.textContent = 'Отправляю...';
+                function getDeviceType() {
+                    const ua = navigator.userAgent || '';
+                    return /mobile|android|iphone|ipad|ipod/i.test(ua) ? 'mobile' : 'desktop';
+                }
 
-                const fd = new FormData(form);
-                const data = Object.fromEntries(fd.entries());
+                function collectClientInfo() {
+                    return {
+                    clientTime: new Date().toISOString(),
+                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+                    language: navigator.language || null,
+                    languages: Array.isArray(navigator.languages) ? navigator.languages : null,
+                    platform: navigator.platform || null,
+                    userAgent: navigator.userAgent || null,
+                    deviceType: getDeviceType(),
+                    referrer: document.referrer || null,
+                    screen: {
+                        width: screen.width,
+                        height: screen.height,
+                    },
+                    viewport: {
+                        width: window.innerWidth,
+                        height: window.innerHeight,
+                    },
+                    };
+                }
 
-                // checkbox: если отмечен, в FormData будет "on"
-                data.consent = data.consent === 'on';
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    statusEl.textContent = 'Отправляю...';
 
-                try {
+                    const fd = new FormData(form);
+                    const data = Object.fromEntries(fd.entries());
+
+                    data.consent = data.consent === 'on';
+                    data.client = collectClientInfo();
+
+                    try {
                     const res = await fetch('/api/submit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data),
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
                     });
 
                     const json = await res.json();
                     if (!res.ok) throw new Error(json.error || 'Request failed');
 
-                    statusEl.textContent = 'Готово ✅ (сервер принял данные)';
+                    statusEl.textContent = 'Готово ✅ (сохранено)';
                     form.reset();
-                } catch (err) {
+                    } catch (err) {
                     statusEl.textContent = 'Ошибка ❌: ' + err.message;
-                }
-            });
+                    }
+                });
         </script>
     </body>
 
